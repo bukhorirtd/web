@@ -1256,7 +1256,7 @@ async function buatUserNIS() {
   
     <!-- Dashboard -->
     <div id="dashboard-card" class="card" style="display: none;">
-      <h1>Mutaba'ah Hafalan Santri</h1>
+      <h1>Mutaba'ah Hafalan Siswa SMPTQ dan SDTQ</h1>
       <h2>Ahlan, <span id="namaUser"></span>!</h2>
 
      
@@ -1350,7 +1350,7 @@ async function buatUserNIS() {
 			<th>Juz</th>
             <th>Total Juz</th>
             <th>Nilai</th>
-            <th id="totalAllJuzHeader" style="cursor:pointer; text-decoration:underline;">Setting THMS</th>
+            <th id="totalAllJuzHeader" style="cursor:pointer; text-decoration:underline;">Setting Target</th>
           </tr>
         </thead>
         <tbody></tbody>
@@ -1611,12 +1611,12 @@ function extendSemesterOptions(selectEl, max = SEMESTER_MAX) {
     <label>Jenjang:</label><br>
     <select id="inputJenjang" style="width:90%; margin-bottom:10px;">
   <option value=""></option>
-  <option value="A1">1 PDF</option>
-  <option value="A2">2 PDF</option>
-  <option value="A3">3 PDF</option>
-  <option value="A4">1 MA</option>
-  <option value="A5">2 MA</option>
-  <option value="A6">3 MA</option>
+  <option value="A1">1 SMPTQ</option>
+  <option value="A2">2 SMPTQ</option>
+  <option value="A3">3 SMPTQ</option>
+  <option value="A4">1 SDTQ4</option>
+  <option value="A5">2 SDTQ5</option>
+  <option value="A6">3 SDTQ6</option>
   </select>
 
     <div style="margin-top:10px; display:flex; justify-content:space-between; gap:8px;">
@@ -2775,7 +2775,7 @@ logoutBtn.addEventListener("click", () => {
   // Konfigurasi global yang bisa dioverride sebelum loadSantriData jalan
   window.ABS_FLEX_CFG = window.ABS_FLEX_CFG || {
     statuses: ["hadir","izin","sakit","alpha"],
-    perStatus: Number(window.ABS_FLEX_PER_STATUS ?? 4), // default 4 sesi, bisa 1..6
+    perStatus: Number(window.ABS_FLEX_PER_STATUS ?? 1), // default 4 sesi, bisa 1..1
     defaultTarget: 4,                                   // default denominator
     maxTarget: 6,                                       // denominator 1..6
     labels: null                                        // {hadir:[...], izin:[...], ...] (opsional)
@@ -2795,7 +2795,7 @@ logoutBtn.addEventListener("click", () => {
     const Title   = st.charAt(0).toUpperCase() + st.slice(1);
     const idx     = i - 1;
     const per     = ABS_FLEX_CFG.perStatus|0;
-    const sesiAll = ["Subuh","Pagi","Sore","Malam","Ekstra 1","Ekstra 2"];
+    const sesiAll = ["Pagi"];
 
     // Legacy: jika tetap 2 sesi, pertahankan Pagi/Sore
     if (per === 2){
@@ -3214,7 +3214,7 @@ async function loadSantriData() {
   overlay.style.display = "flex";
 
   // ===== util jenjang (tetap) =====
-  const JENJANG_MAX = Number(window.JENJANG_MAX ?? 9);
+  const JENJANG_MAX = Number(window.JENJANG_MAX ?? 6);
 
   const parseJenjang = (v) => {
     const m = /^A(\d+)$/.exec(String(v || "").trim());
@@ -3649,12 +3649,12 @@ async function loadSantriData() {
           <td class="col-nama">${santri.nama ?? ""}${subTanggal}</td>
           <td>
             <select class="jenjang">
-    <option value="A1" ${jenNow === 'A1' ? 'selected' : ''}>1 PDF</option>
-    <option value="A2" ${jenNow === 'A2' ? 'selected' : ''}>2 PDF</option>
-    <option value="A3" ${jenNow === 'A3' ? 'selected' : ''}>3 PDF</option>
-    <option value="A4" ${jenNow === 'A4' ? 'selected' : ''}>1 MA</option>
-    <option value="A5" ${jenNow === 'A5' ? 'selected' : ''}>2 MA</option>
-    <option value="A6" ${jenNow === 'A6' ? 'selected' : ''}>3 MA</option>
+    <option value="A1" ${jenNow === 'A1' ? 'selected' : ''}>1 SMPTQ</option>
+    <option value="A2" ${jenNow === 'A2' ? 'selected' : ''}>2 SMPTQ</option>
+    <option value="A3" ${jenNow === 'A3' ? 'selected' : ''}>3 SMPTQ</option>
+    <option value="A4" ${jenNow === 'A4' ? 'selected' : ''}>1 SDTQ4</option>
+    <option value="A5" ${jenNow === 'A5' ? 'selected' : ''}>2 SDTQ5</option>
+    <option value="A6" ${jenNow === 'A6' ? 'selected' : ''}>3 SDTQ6</option>
   </select>
           </td>
           <td>
@@ -3678,6 +3678,7 @@ async function loadSantriData() {
     <option value="" ${!ketNow ? 'selected' : ''}></option>
     <option value="SP1" ${ketNow === 'SP1' ? 'selected' : ''}>SP1</option>
     <option value="SP2" ${ketNow === 'SP2' ? 'selected' : ''}>SP2</option>
+    <option value="SP2" ${ketNow === 'SP2' ? 'selected' : ''}>SP3</option>
   </select>
           </td>
           <td>
@@ -5472,7 +5473,7 @@ window.PDF_joinRangeSegmentsCompact = PDF_joinRangeSegmentsCompact;
       const rightX = margin.left + colW + colGap;
 
       doc.setFont('helvetica','normal'); doc.setFontSize(11);
-      doc.text(`Tengaran, ${ttdDate}`, margin.left + totalW, y, { align:'right' });
+      doc.text(`Tanah Grogot, ${ttdDate}`, margin.left + totalW, y, { align:'right' });
 
       const headY = y + 8;
       doc.text('Mengetahui,', leftX, headY);
@@ -5908,7 +5909,7 @@ window.PDF_joinRangeSegmentsCompact = PDF_joinRangeSegmentsCompact;
       const rightX = margin.left + colW + colGap;
 
       doc.setFont('helvetica','normal'); doc.setFontSize(11);
-      doc.text(`Tengaran, ${ttdDate}`, margin.left + totalW, y, { align:'right' });
+      doc.text(`Tanah Grogot, ${ttdDate}`, margin.left + totalW, y, { align:'right' });
 
       const headY = y + 8;
       doc.text('Mengetahui,', leftX, headY);
@@ -6222,7 +6223,7 @@ async function xlsRekapDownload(){
     return out.length ? out.join(', ') : '-';
   }
   function PDF_percentCapaian(totalJuzNum, semester){
-    const batasSemester = {1: 8, 2: 5, 3: 5, 4: 5, 5: 5, 6: 2};
+    const batasSemester = {1: 5, 2: 10, 3: 15, 4: 20, 5: 25, 6: 30};
     const total = Number(totalJuzNum);
     const sem   = Number(semester);
     if (!Number.isFinite(total)) return 0;
@@ -6873,7 +6874,7 @@ async function pdfSantriDownload(){
     const rightX = margin.left + colW + colGap;
 
     doc.setFont('helvetica','normal'); doc.setFontSize(11);
-    doc.text(`Tengaran, ${ttdDate}`, margin.left + totalW, y, { align:'right' });
+    doc.text(`Tanah Grogot, ${ttdDate}`, margin.left + totalW, y, { align:'right' });
 
     const headY = y + 8;
     doc.text('Mengetahui,', leftX, headY);
@@ -7073,7 +7074,7 @@ async function hitungTotalAllJuzFromTable() {
       rekap[key].totalJuz += readTotalJuz(item);
     });
 
-    const batasSemester = {1: 5, 2: 10, 3: 15, 4: 20, 5: 30};
+    const batasSemester = {1: 5, 2: 10, 3: 15, 4: 20, 5: 25, 6: 30};
     const defaultTarget = 30;
 
     const dataToSave = [];
@@ -7220,7 +7221,7 @@ async function hitungTotalAllJuzOtomatis() {
       rekap[key].totalJuz += readTotalJuz(item);
     });
 
-    const batasSemester = {1: 5, 2: 10, 3: 15, 4: 20, 5: 30};
+    const batasSemester = {1: 5, 2: 10, 3: 15, 4: 20, 5: 25, 6: 30};
     const defaultTarget = 30;
 
     rowsArr.forEach(row => {
@@ -8371,7 +8372,7 @@ if (window.currentRowEl){
     else { s=s.replace(/,/g,""); }
     const n = parseFloat(s); return Number.isFinite(n)?n:0;
   };
-  const BATAS = {1: 5, 2: 10, 3: 15, 4: 20, 5: 30};
+  const BATAS = {1: 5, 2: 10, 3: 15, 4: 20, 5: 25, 6: 30};
   const LS_KEY = k => `murRange:${k}`;
 
   function getSantriTable(){
@@ -8816,7 +8817,7 @@ if (window.currentRowEl){
 
 <script>
   // ====== KONFIG (opsional dari window.*) ======
-  const JENJANG_MAX = Number(window.JENJANG_MAX ?? 9);             // 34 default; 0 = tanpa batas atas
+  const JENJANG_MAX = Number(window.JENJANG_MAX ?? 6);             // 34 default; 0 = tanpa batas atas
   const JENJANG_SAFETY_CAP = Number(window.JENJANG_SAFETY_CAP ?? 1000); // darurat bila tanpa batas
 
   // ====== Helper jenjang dinamis ======
