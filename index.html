@@ -3311,7 +3311,7 @@ async function loadSantriData() {
   overlay.style.display = "flex";
 
   // ===== util jenjang (tetap) =====
-  const JENJANG_MAX = Number(window.JENJANG_MAX ?? 32);
+  const JENJANG_MAX = Number(window.JENJANG_MAX ?? 6);
 
   const parseJenjang = (v) => {
     const m = /^A(\d+)$/.exec(String(v || "").trim());
@@ -3781,6 +3781,7 @@ function callFillAyatOptions(selectEl, surahId, selectedAyat=""){
     <option value="" ${!ketNow ? 'selected' : ''}></option>
     <option value="SP1" ${ketNow === 'SP1' ? 'selected' : ''}>SP1</option>
     <option value="SP2" ${ketNow === 'SP2' ? 'selected' : ''}>SP2</option>
+    <option value="SP3" ${ketNow === 'SP3' ? 'selected' : ''}>SP3</option>
   </select>
           </td>
           <td>
@@ -6579,7 +6580,7 @@ const hadirPct  = denomDays > 0
     return out.length ? out.join(', ') : '-';
   }
   function PDF_percentCapaian(totalJuzNum, semester){
-    const batasSemester = {1: 8, 2: 13, 3: 18, 4: 23, 5: 28, 6: 30};
+    const batasSemester = {1: 5, 2: 10, 3: 15, 4: 20, 5: 25, 6: 30};
     const total = Number(totalJuzNum);
     const sem   = Number(semester);
     if (!Number.isFinite(total)) return 0;
@@ -8867,7 +8868,7 @@ if (window.currentRowEl){
     else { s=s.replace(/,/g,""); }
     const n = parseFloat(s); return Number.isFinite(n)?n:0;
   };
-  const BATAS = {1: 8, 2: 13, 3: 18, 4: 23, 5: 28, 6: 30};
+  const BATAS = {1: 5, 2: 10, 3: 15, 4: 20, 5: 25, 6: 30};
   const LS_KEY = k => `murRange:${k}`;
 
   function getSantriTable(){
