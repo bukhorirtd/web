@@ -13297,7 +13297,7 @@ document.addEventListener("DOMContentLoaded", () => {
         ?.classList.contains('show');
 
       if (target){
-        if (overlayOpen) showLoading(); // tampilkan loader selama AJAX jalan
+        if (overlayOpen) showLoading();
 
         if (target.value !== dateStr){
           target.value = dateStr;
@@ -13308,7 +13308,6 @@ document.addEventListener("DOMContentLoaded", () => {
         // AJAX handler akan update #santri-table,
         // MutationObserver -> renderRows() -> hideLoading()
       } else {
-        // Fallback reload penuh + auto-open sekali
         try{
           sessionStorage.setItem(SS_KEY_DATE, dateStr);
           sessionStorage.setItem(SS_KEY_OPEN, '1');
@@ -13317,7 +13316,6 @@ document.addEventListener("DOMContentLoaded", () => {
         window.location.reload();
       }
     }catch(e){
-      // Kalau error, fallback reload penuh + auto-open sekali
       try{
         sessionStorage.setItem(SS_KEY_DATE, dateStr);
         sessionStorage.setItem(SS_KEY_OPEN, '1');
@@ -13367,8 +13365,8 @@ document.addEventListener("DOMContentLoaded", () => {
     tableObserver = new MutationObserver(function(){
       const overlay = document.getElementById('presensiAllOverlay');
       if (overlay && overlay.classList.contains('show')){
-        renderRows();       // sync isi modal dengan data baru
-        hideLoading();      // matikan loader setelah data masuk
+        renderRows();
+        hideLoading();
       }
     });
 
@@ -13510,14 +13508,17 @@ document.addEventListener("DOMContentLoaded", () => {
     const { rows } = getSantriRows();
     const chosen = new Map();
 
+    // Baca pilihan di modal
     document.querySelectorAll('#paRows .pa-row').forEach(r=>{
       const nis = r.dataset.nis;
-      const status =
-        r.querySelector('.st-hadir')?.checked ? 'hadir' :
-        r.querySelector('.st-izin')?.checked  ? 'izin'  :
-        r.querySelector('.st-sakit')?.checked ? 'sakit' :
-        r.querySelector('.st-alpha')?.checked ? 'alpha' : '';
-      chosen.set(nis, status);
+      let status = '';
+      if (r.querySelector('.st-hadir')?.checked) status = 'hadir';
+      else if (r.querySelector('.st-izin')?.checked) status = 'izin';
+      else if (r.querySelector('.st-sakit')?.checked) status = 'sakit';
+      else if (r.querySelector('.st-alpha')?.checked) status = 'alpha';
+
+      // status kosong berarti user ingin clear presensi utk NIS tsb
+      chosen.set(nis, status || null);
     });
 
     const per = Number(window.ABS_FLEX_CFG?.perStatus ?? 2);
@@ -13579,23 +13580,40 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }
 
+    // Terapkan ke tabel
     rows.forEach(tr=>{
       const nis = (tr.dataset?.nis || tr.querySelector('td')?.textContent || '').trim();
-      const st  = chosen.get(nis);
-      if (!st) return;
+      if (!chosen.has(nis)) return;
 
+      const chosenStatus = chosen.get(nis); // 'hadir'|'izin'|'sakit'|'alpha'|null
       const cell = tr.querySelector('.abs-flex-cell');
       if (!cell) return;
 
       const targetNow = Number(cell._absensiTarget || window.ABS_FLEX_CFG?.defaultTarget || 1);
-      cell._absensiItems = makeItemsFor(st, targetNow);
-      const rec = compute(cell._absensiItems, targetNow);
+
+      let items;
+      if (chosenStatus === null){
+        // clear semua status utk NIS ini
+        items = [];
+        for (const st of allStatuses){
+          for (let i=1;i<=per;i++){
+            items.push({ key:`${st}${i}`, checked:false });
+          }
+        }
+      } else {
+        items = makeItemsFor(chosenStatus, targetNow);
+      }
+
+      cell._absensiItems = items;
+      const rec = compute(items, targetNow);
       cell._absensiTarget  = rec.target;
       cell._absensiChecked = rec.checked;
       cell._absensiPercent = rec.percent;
+
       updateMini(cell);
     });
 
+    // Emit event keluar (opsional untuk logging / sync lain)
     const tanggal = document.getElementById('paTanggal').value;
     const hari = document.getElementById('paHari').textContent;
     const itemsOut = [];
@@ -13642,7 +13660,7 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById('presensiAllOverlay').setAttribute('aria-hidden','false');
 
     setFixedNamaWidthMobile();
-    hideLoading(); // pastikan bersih saat baru dibuka
+    hideLoading();
   }
 
   function closeModal(){
@@ -13723,7 +13741,7 @@ document.addEventListener("DOMContentLoaded", () => {
     __paResizeT = requestAnimationFrame(setFixedNamaWidthMobile);
   });
 
-  // Auto-open modal setelah reload jika (dan hanya jika) sebelumnya memang diset saat fallback reload
+  // Auto-open modal setelah reload jika (dan hanya jika) fallback reload yang set flag
   try{
     const shouldOpen = sessionStorage.getItem(SS_KEY_OPEN) === '1';
     const savedDate = sessionStorage.getItem(SS_KEY_DATE);
