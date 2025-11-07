@@ -1719,7 +1719,7 @@ function extendSemesterOptions(selectEl, max = SEMESTER_MAX) {
     <label>Jenjang:</label><br>
     <select id="inputJenjang" style="width:90%; margin-bottom:10px;">
   <option value=""></option>
-  <option value="A1">1 SLTP</option>
+  <option value="A1">1 SMPTQ</option>
   <option value="A2">2 SMPTQ</option>
   <option value="A3">3 SMPTQ</option>
   <option value="A4">1 SDTQ4</option>
@@ -3751,12 +3751,12 @@ function callFillAyatOptions(selectEl, surahId, selectedAyat=""){
           <td class="col-nama">${santri.nama ?? ""}${subTanggal}</td>
           <td>
             <select class="jenjang">
-    <option value="A1" ${jenNow === 'A1' ? 'selected' : ''}>SMPTQ</option>
-    <option value="A2" ${jenNow === 'A2' ? 'selected' : ''}>SMPTQ</option>
-    <option value="A3" ${jenNow === 'A3' ? 'selected' : ''}>SMPTQ</option>
-    <option value="A4" ${jenNow === 'A4' ? 'selected' : ''}>SDTQ4</option>
-    <option value="A5" ${jenNow === 'A5' ? 'selected' : ''}>SDTQ5</option>
-    <option value="A6" ${jenNow === 'A6' ? 'selected' : ''}>SDTQ6</option>
+    <option value="A1" ${jenNow === 'A1' ? 'selected' : ''}>1 SMPTQ</option>
+    <option value="A2" ${jenNow === 'A2' ? 'selected' : ''}>2 SMPTQ</option>
+    <option value="A3" ${jenNow === 'A3' ? 'selected' : ''}>3 SMPTQ</option>
+    <option value="A4" ${jenNow === 'A4' ? 'selected' : ''}>1 SDTQ4</option>
+    <option value="A5" ${jenNow === 'A5' ? 'selected' : ''}>2 SDTQ5</option>
+    <option value="A6" ${jenNow === 'A6' ? 'selected' : ''}>3 SDTQ6</option>
   </select>
           </td>
           <td>
