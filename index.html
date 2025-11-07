@@ -13308,6 +13308,7 @@ document.addEventListener("DOMContentLoaded", () => {
         // AJAX handler akan update #santri-table,
         // MutationObserver -> renderRows() -> hideLoading()
       } else {
+        // Fallback reload penuh + auto-open sekali
         try{
           sessionStorage.setItem(SS_KEY_DATE, dateStr);
           sessionStorage.setItem(SS_KEY_OPEN, '1');
@@ -13316,6 +13317,7 @@ document.addEventListener("DOMContentLoaded", () => {
         window.location.reload();
       }
     }catch(e){
+      // Kalau error, fallback reload penuh + auto-open sekali
       try{
         sessionStorage.setItem(SS_KEY_DATE, dateStr);
         sessionStorage.setItem(SS_KEY_OPEN, '1');
@@ -13365,8 +13367,8 @@ document.addEventListener("DOMContentLoaded", () => {
     tableObserver = new MutationObserver(function(){
       const overlay = document.getElementById('presensiAllOverlay');
       if (overlay && overlay.classList.contains('show')){
-        renderRows();
-        hideLoading();
+        renderRows();       // sync isi modal dengan data baru
+        hideLoading();      // matikan loader setelah data masuk
       }
     });
 
@@ -13423,6 +13425,46 @@ document.addEventListener("DOMContentLoaded", () => {
     overlay?.style?.setProperty('--pa-nama-w', `${target}px`);
   }
 
+  // ===== auto-sync bulk checkbox dari isi rows =====
+  function syncBulkFromRows(){
+    const rows = document.querySelectorAll('#paRows .pa-row');
+    const cbHadir = document.getElementById('paAllHadir');
+    const cbIzin  = document.getElementById('paAllIzin');
+    const cbSakit = document.getElementById('paAllSakit');
+    const cbAlpha = document.getElementById('paAllAlpha');
+
+    [cbHadir, cbIzin, cbSakit, cbAlpha].forEach(cb => { if (cb) cb.checked = false; });
+
+    if (!rows.length) return;
+
+    let allHadir = true;
+    let allIzin  = true;
+    let allSakit = true;
+    let allAlpha = true;
+
+    rows.forEach(row => {
+      const h = row.querySelector('.st-hadir')?.checked || false;
+      const i = row.querySelector('.st-izin')?.checked  || false;
+      const s = row.querySelector('.st-sakit')?.checked || false;
+      const a = row.querySelector('.st-alpha')?.checked || false;
+
+      if (!h) allHadir = false;
+      if (!i) allIzin  = false;
+      if (!s) allSakit = false;
+      if (!a) allAlpha = false;
+    });
+
+    const candidates = [];
+    if (allHadir) candidates.push(cbHadir);
+    if (allIzin)  candidates.push(cbIzin);
+    if (allSakit) candidates.push(cbSakit);
+    if (allAlpha) candidates.push(cbAlpha);
+
+    if (candidates.length === 1 && candidates[0]){
+      candidates[0].checked = true;
+    }
+  }
+
   // ===== render daftar di modal =====
   function renderRows(){
     const wrap = document.getElementById('paRows');
@@ -13468,6 +13510,7 @@ document.addEventListener("DOMContentLoaded", () => {
       ?.classList.add('nama');
 
     setFixedNamaWidthMobile();
+    syncBulkFromRows();
   }
 
   // ===== BULK (mutually exclusive + clear saat uncheck) =====
@@ -13508,17 +13551,15 @@ document.addEventListener("DOMContentLoaded", () => {
     const { rows } = getSantriRows();
     const chosen = new Map();
 
-    // Baca pilihan di modal
+    // Baca pilihan dari modal
     document.querySelectorAll('#paRows .pa-row').forEach(r=>{
       const nis = r.dataset.nis;
-      let status = '';
-      if (r.querySelector('.st-hadir')?.checked) status = 'hadir';
-      else if (r.querySelector('.st-izin')?.checked) status = 'izin';
-      else if (r.querySelector('.st-sakit')?.checked) status = 'sakit';
-      else if (r.querySelector('.st-alpha')?.checked) status = 'alpha';
-
-      // status kosong berarti user ingin clear presensi utk NIS tsb
-      chosen.set(nis, status || null);
+      const status =
+        r.querySelector('.st-hadir')?.checked ? 'hadir' :
+        r.querySelector('.st-izin')?.checked  ? 'izin'  :
+        r.querySelector('.st-sakit')?.checked ? 'sakit' :
+        r.querySelector('.st-alpha')?.checked ? 'alpha' : '';
+      chosen.set(nis, status); // boleh kosong (artinya clear)
     });
 
     const per = Number(window.ABS_FLEX_CFG?.perStatus ?? 2);
@@ -13541,6 +13582,23 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       }
       return items;
+    }
+
+    function makeEmptyItems(target){
+      const t = Math.max(
+        1,
+        Math.min(6,
+          Number(target) || Number(window.ABS_FLEX_CFG?.defaultTarget || 1)
+        )
+      );
+      const items=[];
+      for (const st of allStatuses){
+        for (let i=1;i<=per;i++){
+          const key = `${st}${i}`;
+          items.push({ key, checked:false });
+        }
+      }
+      return { items, target:t };
     }
 
     function compute(items, target){
@@ -13580,40 +13638,38 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }
 
-    // Terapkan ke tabel
+    // Terapkan ke setiap row di dashboard
     rows.forEach(tr=>{
       const nis = (tr.dataset?.nis || tr.querySelector('td')?.textContent || '').trim();
-      if (!chosen.has(nis)) return;
+      if (!nis) return;
 
-      const chosenStatus = chosen.get(nis); // 'hadir'|'izin'|'sakit'|'alpha'|null
+      const chosenStatus = chosen.get(nis); // bisa 'hadir'/'izin'/... atau '' (clear) atau undefined
       const cell = tr.querySelector('.abs-flex-cell');
       if (!cell) return;
 
-      const targetNow = Number(cell._absensiTarget || window.ABS_FLEX_CFG?.defaultTarget || 1);
+      const currentTarget = Number(cell._absensiTarget || window.ABS_FLEX_CFG?.defaultTarget || 1);
 
-      let items;
-      if (chosenStatus === null){
-        // clear semua status utk NIS ini
-        items = [];
-        for (const st of allStatuses){
-          for (let i=1;i<=per;i++){
-            items.push({ key:`${st}${i}`, checked:false });
-          }
-        }
+      if (!chosenStatus){ 
+        // CLEAR: tidak ada yang dicentang di modal -> matikan semua checkbox di flex
+        const empty = makeEmptyItems(currentTarget);
+        cell._absensiItems   = empty.items;
+        const rec = compute(cell._absensiItems, empty.target);
+        cell._absensiTarget  = rec.target;
+        cell._absensiChecked = rec.checked;
+        cell._absensiPercent = rec.percent;
+        updateMini(cell);
       } else {
-        items = makeItemsFor(chosenStatus, targetNow);
+        // SET ke status tunggal
+        cell._absensiItems = makeItemsFor(chosenStatus, currentTarget);
+        const rec = compute(cell._absensiItems, currentTarget);
+        cell._absensiTarget  = rec.target;
+        cell._absensiChecked = rec.checked;
+        cell._absensiPercent = rec.percent;
+        updateMini(cell);
       }
-
-      cell._absensiItems = items;
-      const rec = compute(items, targetNow);
-      cell._absensiTarget  = rec.target;
-      cell._absensiChecked = rec.checked;
-      cell._absensiPercent = rec.percent;
-
-      updateMini(cell);
     });
 
-    // Emit event keluar (opsional untuk logging / sync lain)
+    // Event keluar (opsional, tidak diubah)
     const tanggal = document.getElementById('paTanggal').value;
     const hari = document.getElementById('paHari').textContent;
     const itemsOut = [];
@@ -13717,7 +13773,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // Saat tanggal di modal diubah:
   document.getElementById('paTanggal').addEventListener('change', function(){
     const today = getTodayStr();
     if (this.value > today) {
@@ -13741,7 +13796,7 @@ document.addEventListener("DOMContentLoaded", () => {
     __paResizeT = requestAnimationFrame(setFixedNamaWidthMobile);
   });
 
-  // Auto-open modal setelah reload jika (dan hanya jika) fallback reload yang set flag
+  // Auto-open modal setelah reload jika (dan hanya jika) sebelumnya memang diset saat fallback reload
   try{
     const shouldOpen = sessionStorage.getItem(SS_KEY_OPEN) === '1';
     const savedDate = sessionStorage.getItem(SS_KEY_DATE);
